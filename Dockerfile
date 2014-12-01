@@ -5,37 +5,25 @@ RUN yum clean all; yum -y update
 
 # Install the appropriate software
 RUN yum -y groupinstall "Desktop" "Desktop Platform" "X Window System" "Fonts"
-RUN yum -y install wget nano gedit firefox nautilus-open-terminal
-
-# Java 8
-RUN wget -c --no-cookies  --no-check-certificate  --header "Cookie: oraclelicense=accept-securebackup-cookie" \
-	"http://download.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-linux-x64.rpm"  -O /tmp/jdk-8-linux-x64.rpm  && \
-	rpm -i /tmp/jdk-8-linux-x64.rpm && rm -fv /tmp/jdk-8-linux-x64.rpm && \
-	echo "export JAVA_HOME=/usr/java/jdk1.8.0" >> /etc/bashrc && \
-	echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/bashrc && \
-	alternatives   --install /usr/bin/java java /usr/java/jdk1.8.0/bin/java 1 && \
-	alternatives   --set  java  /usr/java/jdk1.8.0/bin/java && \
-	java -version
-ENV JAVA_HOME /usr/java/jdk1.8.0 && \
-	JRE_HOME /usr/java/jdk1.8.0/jre
-# Firefox Java plugin
-RUN cd /usr/lib64/mozilla/plugins/ && \
-	ln -fs /usr/java/latest/lib/amd64/libnpjp2.so
+RUN yum -y install wget nano gedit firefox nautilus-open-terminal git gnome-system-monitor \
+file-roller samba-client samba-common cifs-utils
+# Install dependencies
+RUN yum -y install glibc.i686 libgcc.i686 
 
 # VNC & XRDP Servers
 RUN wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
 	rpm -Uvh epel-release-6*.rpm; rm -f epel-release-6*.rpm
 RUN yum -y install tigervnc tigervnc-server tigervnc-server-module xrdp xinetd
 RUN chkconfig vncserver on 3456 && \
-	su root sh -c " yes password | vncpasswd " && \
-	echo -e  "VNCSERVERS=\"0:root\"\nVNCSERVERARGS[0]=\"-geometry 1280x800 \""\
-	> /etc/sysconfig/vncservers && \
+	useradd user1; su user1 sh -c " yes password | vncpasswd "; echo "user1:password" | chpasswd && \
+	useradd user2; su user2 sh -c " yes password | vncpasswd "; echo "user2:password" | chpasswd  && \
+	su root sh -c " yes centos | vncpasswd "; echo "root:centos" | chpasswd  && \
+	echo -e  "VNCSERVERS=\"0:root 1:user1 2:user2\"\nVNCSERVERARGS[0]=\"-geometry 1280x800\""\\n\
+"VNCSERVERARGS[1]=\"-geometry 1280x800\""\\n\
+"VNCSERVERARGS[2]=\"-geometry 1280x800\""\
+> /etc/sysconfig/vncservers && \
 	chkconfig xrdp on 3456 && \
 	chmod -v +x /etc/init.d/xrdp && \
-	mv /etc/xrdp/startwm.sh /etc/xrdp/startwm.sh.backup && \
-echo -e "#!/bin/sh\n\nif [ -r /etc/default/locale ]; then\n  . /etc/default/locale\n\
-export LANG LANGUAGE\nfi\n. /etc/X11/xinit/Xsession\ngnome-session --session=gnome"\
->> /etc/xrdp/startwm.sh && \
 	chmod -v +x /etc/xrdp/startwm.sh && \
 	echo "gnome-session --session=gnome" > ~/.xsession
 
@@ -52,10 +40,20 @@ Categories=TextEditor;IDE;Development\nX-Ayatana-Desktop-Shortcuts=NewWindow\n\n
 CMD touch /root/.config/sublime-text-3 && \
 	chown -R root:root /root/.config/sublime-text-3
 
-# Chrome
-RUN	wget http://chrome.richardlloyd.org.uk/install_chrome.sh && \
-	chmod -v u+x install_chrome.sh; ./install_chrome.sh -f && \
-	rm -f install_chrome.sh; rm -rf /root/rpmbuild
+# Java x64 1.8.0_25
+RUN wget -c --no-cookies  --no-check-certificate  --header "Cookie: oraclelicense=accept-securebackup-cookie" \
+	"http://download.oracle.com/otn-pub/java/jdk/8u25-b17/jdk-8u25-linux-x64.rpm"  -O /tmp/jdk-8u25-linux-x64.rpm  && \
+	rpm -i /tmp/jdk-8u25-linux-x64.rpm && rm -fv /tmp/jdk-8u25-linux-x64.rpm && \
+	echo "export JAVA_HOME=/usr/java/jdk1.8.0_25" >> /etc/bashrc && \
+	echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/bashrc && \
+	alternatives   --install /usr/bin/java java /usr/java/jdk1.8.0_25/bin/java 1 && \
+	alternatives   --set  java  /usr/java/jdk1.8.0_25/bin/java && \
+	java -version
+ENV JAVA_HOME /usr/java/jdk1.8.0_25
+ENV	JRE_HOME /usr/java/jdk1.8.0_25/jre
+# Firefox Java plugin
+RUN alternatives --install /usr/lib64/mozilla/plugins/libjavaplugin.so libjavaplugin.so.x86_64 \
+	/usr/java/latest/jre/lib/amd64/libnpjp2.so 200000
 
 # Eclipse Luna
 RUN	wget http://mirrors.nic.cz/eclipse/technology/epp/downloads/release/luna/SR1/\
@@ -68,12 +66,38 @@ Exec=/usr/bin/eclipse\nIcon=/usr/eclipse/icon.xpm\nCategories=Application;Develo
 Version=1.0\nType=Application\nTerminal=0"\
 >> /usr/share/applications/eclipse-4.4.desktop
 
+# Chrome
+RUN	wget http://chrome.richardlloyd.org.uk/install_chrome.sh && \
+	chmod -v u+x install_chrome.sh; ./install_chrome.sh -f && \
+	rm -f install_chrome.sh; rm -rf /root/rpmbuild
+
+# Applying Settings for all users
+RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type bool  --set /apps/nautilus/preferences/always_use_browser true && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type bool --set /apps/gnome-screensaver/idle_activation_enabled false && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type bool --set /apps/gnome-screensaver/lock_enabled false && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type int --set /apps/metacity/general/num_workspaces 1 && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type=string --set /apps/gnome_settings_daemon/keybindings/screensaver ' ' && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type=string --set /apps/gnome_settings_daemon/keybindings/power ' ' && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type bool --set /apps/panel/global/disable_log_out true && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type int --set /apps/gnome-power-manager/timeout/sleep_computer_ac '0' && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type int --set /apps/gnome-power-manager/timeout/sleep_display_ac '0' && \
+	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
+	--type int --set /apps/gnome-screensaver/power_management_delay '0'
+
 # Clean
 RUN yum clean all; rm -rf /tmp/*
 
-# Applying Settings
-RUN gconftool-2 --type bool  --set /apps/nautilus/preferences/always_use_browser true
+EXPOSE 5900 5901 5902 3389
 
-EXPOSE 5900 3389
-
-CMD    vncserver :0 && /etc/init.d/xrdp start && bash
+CMD /sbin/service vncserver start && \
+	/etc/init.d/xrdp start && \
+	bash
