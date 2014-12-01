@@ -47,3 +47,18 @@ To remove image by id:
 # docker rmi -f <IMAGE ID>
 ```
 
+To save repository:image to archive
+```
+# docker save alex/centos6 > /Users/Alex/Desktop/alex_centos6.tar
+```
+
+To load repository from archive
+
+```
+# docker load < /Users/Alex/Desktop/alex_centos6.tar
+```
+
+
+
+
+
