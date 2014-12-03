@@ -14,13 +14,13 @@ Copy the sources down (.) or use local path (/Users/Alex/Docker/centos6-desktop)
 To run with remove container after exit (--rm):
 
 ```
-# docker run -it --rm -p 5900:5900 -p 5901:5901 -p 5902:5902 -p 3389:3389 alex/centos6:desktop
+# docker run -it --rm -p 5900:5900 -p 5901:5901 -p 3389:3389 alex/centos6:desktop
 ```
 
 VNC & RDP:
 
 ```
-# 5900 root:centos, 5901 user1:password, 5902 user2:password
+# 5900 root:centos, 5901 user:password
 ```
 
 Show list of all containers:
@@ -57,8 +57,5 @@ To load repository from archive
 ```
 # docker load < /Users/Alex/Desktop/alex_centos6.tar
 ```
-
-
-
 
 

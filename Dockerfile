@@ -6,21 +6,19 @@ RUN yum clean all; yum -y update
 # Install the appropriate software
 RUN yum -y groupinstall "Desktop" "Desktop Platform" "X Window System" "Fonts"
 RUN yum -y install wget nano gedit firefox nautilus-open-terminal git gnome-system-monitor \
-file-roller samba-client samba-common cifs-utils
+file-roller samba-client samba-common cifs-utils unzip
 # Install dependencies
-RUN yum -y install glibc.i686 libgcc.i686 
+RUN yum -y install glibc.i686 libgcc.i686 gtk2*.i686 libXtst*.i686
 
 # VNC & XRDP Servers
 RUN wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
 	rpm -Uvh epel-release-6*.rpm; rm -f epel-release-6*.rpm
 RUN yum -y install tigervnc tigervnc-server tigervnc-server-module xrdp xinetd
 RUN chkconfig vncserver on 3456 && \
-	useradd user1; su user1 sh -c " yes password | vncpasswd "; echo "user1:password" | chpasswd && \
-	useradd user2; su user2 sh -c " yes password | vncpasswd "; echo "user2:password" | chpasswd  && \
+	useradd user; su user sh -c " yes password | vncpasswd "; echo "user:password" | chpasswd && \
 	su root sh -c " yes centos | vncpasswd "; echo "root:centos" | chpasswd  && \
-	echo -e  "VNCSERVERS=\"0:root 1:user1 2:user2\"\nVNCSERVERARGS[0]=\"-geometry 1280x800\""\\n\
-"VNCSERVERARGS[1]=\"-geometry 1280x800\""\\n\
-"VNCSERVERARGS[2]=\"-geometry 1280x800\""\
+	echo -e  "VNCSERVERS=\"0:root 1:user\"\nVNCSERVERARGS[0]=\"-geometry 1280x800\""\\n\
+"VNCSERVERARGS[1]=\"-geometry 1280x800\""\\\
 > /etc/sysconfig/vncservers && \
 	chkconfig xrdp on 3456 && \
 	chmod -v +x /etc/init.d/xrdp && \
@@ -40,9 +38,9 @@ Categories=TextEditor;IDE;Development\nX-Ayatana-Desktop-Shortcuts=NewWindow\n\n
 CMD touch /root/.config/sublime-text-3 && \
 	chown -R root:root /root/.config/sublime-text-3
 
-# Java x64 1.8.0_25
+# JDK x64 1.8.0_25
 RUN wget -c --no-cookies  --no-check-certificate  --header "Cookie: oraclelicense=accept-securebackup-cookie" \
-	"http://download.oracle.com/otn-pub/java/jdk/8u25-b17/jdk-8u25-linux-x64.rpm"  -O /tmp/jdk-8u25-linux-x64.rpm  && \
+"http://download.oracle.com/otn-pub/java/jdk/8u25-b17/jdk-8u25-linux-x64.rpm"  -O /tmp/jdk-8u25-linux-x64.rpm  && \
 	rpm -i /tmp/jdk-8u25-linux-x64.rpm && rm -fv /tmp/jdk-8u25-linux-x64.rpm && \
 	echo "export JAVA_HOME=/usr/java/jdk1.8.0_25" >> /etc/bashrc && \
 	echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/bashrc && \
@@ -55,21 +53,30 @@ ENV	JRE_HOME /usr/java/jdk1.8.0_25/jre
 RUN alternatives --install /usr/lib64/mozilla/plugins/libjavaplugin.so libjavaplugin.so.x86_64 \
 	/usr/java/latest/jre/lib/amd64/libnpjp2.so 200000
 
+# JDK i586 1.8.0_25
+RUN wget -c --no-cookies  --no-check-certificate  --header "Cookie: oraclelicense=accept-securebackup-cookie" \
+http://download.oracle.com/otn-pub/java/jdk/8u25-b17/jdk-8u25-linux-i586.tar.gz && \
+	mkdir -p /usr/java/i586/ && \
+	tar -zxvf jdk-8u25-linux-i586.tar.gz -C /usr/java/i586/ && \
+	rm -f jdk-8u25-linux-i586.tar.gz
+
 # Eclipse Luna
-RUN	wget http://mirrors.nic.cz/eclipse/technology/epp/downloads/release/luna/SR1/\
-eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz && \
-	tar -zxvf eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz -C /usr/ && \
+RUN	wget http://ftp.osuosl.org/pub/eclipse/technology/epp/downloads/release/luna/SR1/\
+eclipse-java-luna-SR1-linux-gtk.tar.gz && \
+	tar -zxvf eclipse-java-luna-SR1-linux-gtk.tar.gz -C /usr/ && \
 	ln -s /usr/eclipse/eclipse /usr/bin/eclipse && \
-	rm -f eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz && \
-echo -e "[Desktop Entry]\nEncoding=UTF-8\nName=Eclipse 4.4.1\nComment=Eclipse Luna\n\
+	rm -f eclipse-java-luna-SR1-linux-gtk.tar.gz
+RUN \
+	sed -i 's/-vmargs/-vm\n\/usr\/java\/i586\/jdk1.8.0_25\/bin\/java\n-vmargs/g' /usr/eclipse/eclipse.ini && \
+	echo -e "[Desktop Entry]\nEncoding=UTF-8\nName=Eclipse 4.4.1\nComment=Eclipse Luna\n\
 Exec=/usr/bin/eclipse\nIcon=/usr/eclipse/icon.xpm\nCategories=Application;Development;Java;IDE\n\
 Version=1.0\nType=Application\nTerminal=0"\
 >> /usr/share/applications/eclipse-4.4.desktop
 
 # Chrome
-RUN	wget http://chrome.richardlloyd.org.uk/install_chrome.sh && \
-	chmod -v u+x install_chrome.sh; ./install_chrome.sh -f && \
-	rm -f install_chrome.sh; rm -rf /root/rpmbuild
+#RUN	wget http://chrome.richardlloyd.org.uk/install_chrome.sh && \
+	#chmod -v u+x install_chrome.sh; ./install_chrome.sh -f && \
+	#rm -f install_chrome.sh; rm -rf /root/rpmbuild
 
 # Applying Settings for all users
 RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
@@ -96,7 +103,7 @@ RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mand
 # Clean
 RUN yum clean all; rm -rf /tmp/*
 
-EXPOSE 5900 5901 5902 3389
+EXPOSE 5900 5901 3389
 
 CMD /sbin/service vncserver start && \
 	/etc/init.d/xrdp start && \
