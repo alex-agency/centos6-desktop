@@ -1,10 +1,6 @@
 FROM centos:centos6
 MAINTAINER Alex
 
-# Variables
-ENV ROOT_PASSWD  centos
-ENV USER_PASSWD  password
-
 # Update
 RUN yum clean all; yum -y update
 
@@ -14,6 +10,10 @@ RUN yum -y install gedit file-roller gnome-system-monitor nautilus-open-terminal
 RUN yum -y install wget nano git samba-client samba-common cifs-utils unzip
 RUN wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
 	rpm -Uvh epel-release-6*.rpm; rm -f epel-release-6*.rpm
+
+# Variables
+ENV ROOT_PASSWD  centos
+ENV USER_PASSWD  password
 
 # VNC & XRDP Servers
 RUN yum -y install tigervnc tigervnc-server tigervnc-server-module xrdp xinetd && \
