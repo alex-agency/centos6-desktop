@@ -3,9 +3,12 @@ alex-centos6-desktop
 
 Docker Centos 6 Desktop environment
 
+
 To build:
 
-Copy the sources down (.) or use local path (/Users/Alex/Docker/centos6-desktop):
+Copy the sources to following path:
+MacOS: /Users/<USERNAME>/Docker/centos6-desktop 
+Windows: /c/Users/<USERNAME>/Docker/centos6-desktop
 
 ```
 # docker build --force-rm -t alex/centos6:desktop /Users/Alex/Docker/centos6-desktop
