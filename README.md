@@ -32,10 +32,10 @@ Show list of all containers:
 # docker ps -a
 ```
 
-To remove container by id:
+To remove all stopeed containers:
 
 ```
-# docker rm -f <CONTAINER ID>
+# docker rm $(docker ps -a -q)
 ```
 
 Show list of all images:

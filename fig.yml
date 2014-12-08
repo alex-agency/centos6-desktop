@@ -1,0 +1,11 @@
+
+desktop:
+    build: .
+    #image: alex/centos6:desktop
+    environment:
+        - ROOT_PASSWD=1
+        - USER_PASSWD=1
+    ports:
+        - "5900:5900"
+        - "5901:5901"
+        - "3389:3389"
