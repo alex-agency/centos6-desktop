@@ -4,7 +4,7 @@ alex-centos6-desktop
 Docker Centos 6 Desktop environment
 
 
-To build:
+To build image:
 
 Copy the sources to following path:
 MacOS: /Users/<USERNAME>/Docker/centos6-desktop 
@@ -12,12 +12,24 @@ Windows: /c/Users/<USERNAME>/Docker/centos6-desktop
 
 ```
 # docker build --force-rm=true -t alex/centos6:desktop /Users/Alex/Docker/centos6-desktop
+or
+# fig build
 ```
 
-To run with remove container after exit (--rm):
+To run container in the background:
+
+```
+# docker run -d -p 5900:5900 -p 5901:5901 -p 3389:3389 alex/centos6:desktop
+or
+# fig up -d
+```
+
+To run interactive with remove container after exit (--rm):
 
 ```
 # docker run -it --rm -p 5900:5900 -p 5901:5901 -p 3389:3389 alex/centos6:desktop
+or
+# fig up
 ```
 
 VNC & RDP:
@@ -60,5 +72,4 @@ To load repository from archive
 ```
 # docker load < /Users/Alex/Desktop/alex_centos6.tar
 ```
-
 

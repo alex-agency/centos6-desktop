@@ -4,10 +4,11 @@ MAINTAINER Alex
 # Install the appropriate software
 RUN yum -y update && yum -y groupinstall "Desktop" "X Window System" "Fonts"
 RUN yum -y update && yum -y install \
-gedit file-roller gnome-system-monitor nautilus-open-terminal firefox \ 
-wget nano git samba-client samba-common cifs-utils unzip htop python-setuptools
+wget gedit file-roller gnome-system-monitor nautilus-open-terminal samba-client samba-common unzip
 RUN wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
 	rpm -Uvh epel-release-6*.rpm; rm -f epel-release-6*.rpm
+RUN yum -y update && yum -y install \
+firefox git nano htop cifs-utils python-setuptools
 
 # Variables
 ENV ROOT_PASSWD  centos
@@ -29,6 +30,9 @@ VNCSERVERARGS[0]=\"-geometry 1280x800\""\\n\
 	chmod -v +x /etc/xrdp/startwm.sh && \
 	echo "gnome-session --session=gnome" > ~/.xsession
 
+# Cleanup
+RUN yum clean all && rm -rf /tmp/* /var/log/*
+
 # Supervisor
 RUN easy_install supervisor && \
 	mkdir -p /var/log/supervisor && \
@@ -37,23 +41,27 @@ RUN easy_install supervisor && \
 [supervisord]\n\
 nodaemon=true\n\
 logfile=/var/log/supervisor/supervisord.log\n\
-logfile_maxbytes=50MB\n\
-logfile_backups=10\n\
-loglevel=info\n\
-pidfile=/var/run/supervisord.pid\n\
-childlogdir=/var/log\n\n\
+logfile_maxbytes=10MB\n\
+logfile_backups=5\n\
+loglevel=warn\n\
 [include]\n\
 files = /etc/supervisord.d/*.conf"\
 > /etc/supervisord.conf
-
+# VNC & XRDP services
 RUN echo -e  "\
+[group:vnc]\n\
+programs=vncserver,xrdp\n\
+
 [program:vncserver]\n\
-command=/etc/init.d/vncserver start && tail -f\n\
-autostart=true\n\
-autorestart=true\n\
-stderr_logfile=/var/log/supervisor/vncserver.err.log\n\
-stdout_logfile=/var/log/supervisor/vncserver.out.log"\
-> /etc/supervisord.d/vncserver.conf
+command=/etc/init.d/vncserver start\n\
+stderr_logfile=/var/log/supervisor/vncserver-error.log\n\
+stdout_logfile=/var/log/supervisor/vncserver.log\n\
+
+[program:xrdp]\n\
+command=/etc/init.d/xrdp start\n\
+stderr_logfile=/var/log/supervisor/xrdp-error.log\n\
+stdout_logfile=/var/log/supervisor/xrdp.log"\
+> /etc/supervisord.d/vnc.conf
 
 # Applying Gnome Settings for all users
 RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
@@ -75,23 +83,14 @@ RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mand
 	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
 	--type int --set /apps/gnome-power-manager/timeout/sleep_display_ac '0' && \
 	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	--type int --set /apps/gnome-screensaver/power_management_delay '0'
+	--type int --set /apps/gnome-screensaver/power_management_delay '0' && \
 	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	--type bool --set /desktop/gnome/remote_access/enabled true
+	--type bool --set /desktop/gnome/remote_access/enabled true && \
 	gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
 	--type bool --set /desktop/gnome/remote_access/prompt_enabled false
-
-# Cleanup
-RUN yum clean all; rm -rf /tmp/* /var/log/*
 
 # Inform which port could be opened
 EXPOSE 5900 5901 3389
 
 # Exec configuration to container
-ENTRYPOINT \
-	/etc/init.d/vncserver start && tail -f #&& \
-	#/etc/init.d/xrdp start
-
-# Default argument to container
-CMD [ "bash" ]
-
+ENTRYPOINT ["supervisord"]
