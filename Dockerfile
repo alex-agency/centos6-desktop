@@ -44,6 +44,7 @@ logfile=/var/log/supervisor/supervisord.log\n\
 logfile_maxbytes=10MB\n\
 logfile_backups=5\n\
 loglevel=warn\n\
+pidfile=/var/run/supervisord.pid\n\
 [include]\n\
 files = /etc/supervisord.d/*.conf"\
 > /etc/supervisord.conf
