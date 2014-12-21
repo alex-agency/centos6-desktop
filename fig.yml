@@ -1,7 +1,6 @@
 
 desktop:
-    build: .
-    #image: alex/centos6:desktop
+	image: alex/centos6:desktop
     ports:
         - "5900:5900"
         - "5901:5901"

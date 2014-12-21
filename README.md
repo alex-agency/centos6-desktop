@@ -12,8 +12,6 @@ Windows: /c/Users/<USERNAME>/Docker/centos6-desktop
 
 ```
 # docker build --force-rm=true -t alex/centos6:desktop /Users/Alex/Docker/centos6-desktop
-or
-# fig build
 ```
 
 To run container in the background:
