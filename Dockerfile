@@ -54,12 +54,12 @@ RUN echo -e  "\
 programs=vncserver,xrdp\n\
 
 [program:vncserver]\n\
-command=/etc/init.d/vncserver start\n\
+command=/etc/init.d/vncserver restart\n\
 stderr_logfile=/var/log/supervisor/vncserver-error.log\n\
 stdout_logfile=/var/log/supervisor/vncserver.log\n\
 
 [program:xrdp]\n\
-command=/etc/init.d/xrdp start\n\
+command=/etc/init.d/xrdp restart\n\
 stderr_logfile=/var/log/supervisor/xrdp-error.log\n\
 stdout_logfile=/var/log/supervisor/xrdp.log"\
 > /etc/supervisord.d/vnc.conf
