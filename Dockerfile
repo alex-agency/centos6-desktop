@@ -94,4 +94,4 @@ RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mand
 EXPOSE 5900 5901 3389
 
 # Exec configuration to container
-ENTRYPOINT ["supervisord"]
+CMD ["supervisord"]
