@@ -23,7 +23,7 @@ RUN yum -y update && yum -y install tigervnc tigervnc-server tigervnc-server-mod
 	echo -e  "\
 VNCSERVERS=\"0:root 1:user\"\n\
 VNCSERVERARGS[0]=\"-geometry 1280x800\""\\n\
-"VNCSERVERARGS[1]=\"-geometry 1280x800\""\\\
+"VNCSERVERARGS[1]=\"-geometry 1280x800\""\\
 > /etc/sysconfig/vncservers && \
 	chkconfig xrdp on 3456 && \
 	chmod -v +x /etc/init.d/xrdp && \
