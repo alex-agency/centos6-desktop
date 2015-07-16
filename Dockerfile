@@ -3,19 +3,22 @@ MAINTAINER Alex
 
 # Install the appropriate software
 RUN yum -y update && yum -y groupinstall "Desktop" "X Window System" "Fonts"
-RUN yum -y update && yum -y install \
-wget gedit file-roller gnome-system-monitor nautilus-open-terminal samba-client samba-common unzip
-RUN wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
-	rpm -Uvh epel-release-6*.rpm; rm -f epel-release-6*.rpm
-RUN yum -y update && yum -y install \
-firefox git nano htop cifs-utils python-setuptools
+RUN yum -y install wget && \
+	wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
+	rpm -Uvh epel-release-6*.rpm; rm -f epel-release-6*.rpm && \
+	yum -y update && \
+	yum -y install gedit file-roller gnome-system-monitor nautilus-open-terminal samba-client \
+					samba-common unzip firefox git nano htop cifs-utils python-setuptools && \
+	yum clean all && rm -rf /tmp/*
 
 # Variables
 ENV ROOT_PASSWD  centos
 ENV USER_PASSWD  password
 
 # VNC & XRDP Servers
-RUN yum -y update && yum -y install tigervnc tigervnc-server tigervnc-server-module xrdp xinetd && \
+RUN yum -y update && \
+	yum -y install tigervnc tigervnc-server tigervnc-server-module xrdp xinetd && \
+	yum clean all && rm -rf /tmp/* && \
 	chkconfig vncserver on 3456 && \
 	useradd user && \
 	su user sh -c " yes $USER_PASSWD | vncpasswd " && echo "user:$USER_PASSWD" | chpasswd && \
@@ -29,9 +32,6 @@ VNCSERVERARGS[0]=\"-geometry 1280x800\""\\n\
 	chmod -v +x /etc/init.d/xrdp && \
 	chmod -v +x /etc/xrdp/startwm.sh && \
 	echo "gnome-session --session=gnome" > ~/.xsession
-
-# Cleanup
-RUN yum clean all && rm -rf /tmp/* /var/log/*
 
 # Supervisor
 RUN easy_install supervisor && \

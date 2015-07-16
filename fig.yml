@@ -1,7 +1,0 @@
-
-desktop:
-	image: alexagency/centos6-desktop
-    ports:
-        - "5900:5900"
-        - "5901:5901"
-        - "3389:3389"
