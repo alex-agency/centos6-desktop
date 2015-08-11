@@ -8,7 +8,7 @@ RUN yum -y install wget && \
 	rpm -Uvh epel-release-6*.rpm; rm -f epel-release-6*.rpm && \
 	yum -y update && \
 	yum -y install gedit file-roller gnome-system-monitor nautilus-open-terminal samba-client \
-					samba-common unzip firefox git nano htop cifs-utils python-setuptools && \
+		samba-common unzip firefox git nano htop python-setuptools && \
 	yum clean all && rm -rf /tmp/*
 
 # Variables
@@ -20,18 +20,20 @@ RUN yum -y update && \
 	yum -y install tigervnc tigervnc-server tigervnc-server-module xrdp xinetd && \
 	yum clean all && rm -rf /tmp/* && \
 	chkconfig vncserver on 3456 && \
-	useradd user && \
-	su user sh -c " yes $USER_PASSWD | vncpasswd " && echo "user:$USER_PASSWD" | chpasswd && \
-	su root sh -c " yes $ROOT_PASSWD | vncpasswd " && echo "root:$ROOT_PASSWD" | chpasswd && \
 	echo -e  "\
 VNCSERVERS=\"0:root 1:user\"\n\
-VNCSERVERARGS[0]=\"-geometry 1280x800\""\\n\
-"VNCSERVERARGS[1]=\"-geometry 1280x800\""\\
-> /etc/sysconfig/vncservers && \
+VNCSERVERARGS[0]=\"-geometry 1280x960\"\n\
+VNCSERVERARGS[1]=\"-geometry 1280x960\""\
+>> /etc/sysconfig/vncservers && \
 	chkconfig xrdp on 3456 && \
 	chmod -v +x /etc/init.d/xrdp && \
 	chmod -v +x /etc/xrdp/startwm.sh && \
 	echo "gnome-session --session=gnome" > ~/.xsession
+
+# Create User and change passwords
+RUN su root sh -c "yes $ROOT_PASSWD | vncpasswd" && echo "root:$ROOT_PASSWD" | chpasswd && \
+	useradd user && \
+	su user sh -c "yes $USER_PASSWD | vncpasswd" && echo "user:$USER_PASSWD" | chpasswd
 
 # Supervisor
 RUN easy_install supervisor && \
@@ -41,27 +43,25 @@ RUN easy_install supervisor && \
 [supervisord]\n\
 nodaemon=true\n\
 logfile=/var/log/supervisor/supervisord.log\n\
-logfile_maxbytes=10MB\n\
-logfile_backups=5\n\
+logfile_maxbytes=1MB\n\
+logfile_backups=1\n\
 loglevel=warn\n\
 pidfile=/var/run/supervisord.pid\n\
 [include]\n\
 files = /etc/supervisord.d/*.conf"\
 > /etc/supervisord.conf
-# VNC & XRDP services
+# Autostart services
 RUN echo -e  "\
-[group:vnc]\n\
-programs=vncserver,xrdp\n\
-
-[program:vncserver]\n\
-command=/etc/init.d/vncserver restart\n\
-stderr_logfile=/var/log/supervisor/vncserver-error.log\n\
-stdout_logfile=/var/log/supervisor/vncserver.log\n\
-
 [program:xrdp]\n\
 command=/etc/init.d/xrdp restart\n\
 stderr_logfile=/var/log/supervisor/xrdp-error.log\n\
 stdout_logfile=/var/log/supervisor/xrdp.log"\
+> /etc/supervisord.d/xrdp.conf && \
+	echo -e  "\
+[program:vncserver]\n\
+command=/etc/init.d/vncserver restart\n\
+stderr_logfile=/var/log/supervisor/vncserver-error.log\n\
+stdout_logfile=/var/log/supervisor/vncserver.log"\
 > /etc/supervisord.d/vnc.conf
 
 # Applying Gnome Settings for all users
