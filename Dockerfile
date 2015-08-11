@@ -3,12 +3,8 @@ MAINTAINER Alex
 
 # Install the appropriate software
 RUN yum -y update && yum -y groupinstall "Desktop" "X Window System" "Fonts"
-RUN yum -y install wget && \
-	wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
-	rpm -Uvh epel-release-6*.rpm; rm -f epel-release-6*.rpm && \
-	yum -y update && \
-	yum -y install gedit file-roller gnome-system-monitor nautilus-open-terminal samba-client \
-		samba-common unzip firefox git nano htop python-setuptools && \
+RUN yum -y install epel-release wget gedit file-roller gnome-system-monitor nautilus-open-terminal \
+		samba-client samba-common unzip firefox git nano htop python-setuptools && \
 	yum clean all && rm -rf /tmp/*
 
 # Variables
