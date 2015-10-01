@@ -3,6 +3,8 @@ alex-centos6-desktop
 
 Docker Centos 6 Desktop environment
 
+![desktop](https://cloud.githubusercontent.com/assets/1122708/10214427/d4911db2-6820-11e5-9b1b-93f3c59e9866.jpg)
+
 Create dev workstation
 
 ```
